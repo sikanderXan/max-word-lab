@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximilian's Word Lab</title>
+    
+    <!-- Google Fonts for a friendly look -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- jsPDF and AutoTable for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root {
+            --light-blue: #a0e8ef;
+            --mint: #b9fbc0;
+            --solar-yellow: #fde68a;
+            --soft-pink: #ffb7b2;
+            --white: #ffffff;
+            --text-dark: #334155;
+            --text-light: #64748b;
+            --bg-color: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            padding: clamp(10px, 2vw, 20px);
+            background-image: radial-gradient(var(--mint) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: clamp(15px, 4vw, 30px);
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: clamp(15px, 3vw, 30px);
+        }
+
+        h1 {
+            color: #0ea5e9;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 0px var(--solar-yellow);
+        }
+        
+        header p {
+            font-size: clamp(0.9rem, 2vw, 1rem);
+        }
+
+        /* Gamification Section */
+        .gamification-panel {
+            background: var(--white);
+            border: 3px solid var(--solar-yellow);
+            border-radius: 20px;
+            padding: clamp(15px, 3vw, 20px);
+            margin-bottom: clamp(15px, 3vw, 30px);
+            text-align: center;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #e2e8f0;
+            border-radius: 15px;
+            height: clamp(15px, 3vw, 25px);
+            margin: 10px 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--mint), #34d399);
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+            border-radius: 15px;
+        }
+
+        .badges {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            margin-top: 10px;
+        }
+
+        /* Badge Legend */
+        .badge-legend {
+            margin-top: 15px;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 12px;
+            border: 2px dashed #cbd5e1;
+            text-align: center;
+        }
+        
+        .badge-legend summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #0ea5e9;
+            outline: none;
+            padding: 5px;
+            list-style: none; /* Ascunde săgeata default pe unele browsere */
+        }
+        
+        .badge-legend summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            background: var(--white);
+            padding: 8px 5px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-size: 0.85rem;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .legend-item .icon { font-size: 1.5rem; margin-bottom: 5px; }
+        .legend-item .name { font-weight: bold; color: var(--text-dark); }
+        .legend-item .req { color: var(--text-light); font-size: 0.75rem; margin-top: 2px; }
+
+        /* Word of the Day */
+        .wotd-card {
+            background: linear-gradient(135deg, var(--light-blue), #7dd3fc);
+            border-radius: 20px;
+            padding: clamp(15px, 3vw, 20px);
+            text-align: center;
+            margin-bottom: clamp(15px, 3vw, 30px);
+            color: #0c4a6e;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.2);
+        }
+
+        .wotd-card h2 { margin-bottom: 10px; font-size: clamp(1.2rem, 3vw, 1.5rem); }
+        .wotd-word { font-size: clamp(1.5rem, 4vw, 2rem); font-weight: bold; margin: 10px 0; }
+        .wotd-context { font-style: italic; font-size: clamp(0.9rem, 2vw, 1rem); }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: clamp(15px, 3vw, 30px);
+            align-items: start;
+        }
+
+        @media (max-width: 850px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Form */
+        .add-form {
+            background: var(--white);
+            padding: clamp(15px, 3vw, 20px);
+            border-radius: 20px;
+            border: 2px dashed #cbd5e1;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus { border-color: var(--light-blue); }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            min-height: 44px;
+        }
+
+        button:active { transform: translateY(2px); box-shadow: none; }
+
+        .btn-add { background-color: var(--mint); color: #065f46; box-shadow: 0 4px 0 #34d399; }
+        .btn-quiz { background-color: var(--solar-yellow); color: #854d0e; box-shadow: 0 4px 0 #facc15; margin-top: 15px; }
+        .btn-pdf { background-color: var(--soft-pink); color: #9f1239; box-shadow: 0 4px 0 #fb7185; margin-top: 15px; }
+
+        /* Cards List */
+        .words-list { display: flex; flex-direction: column; gap: clamp(15px, 2vw, 20px); }
+
+        .letter-group {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            padding: clamp(10px, 2vw, 15px);
+            border: 2px solid #e2e8f0;
+        }
+
+        .letter-header {
+            font-size: clamp(1.4rem, 3vw, 1.8rem);
+            color: #0ea5e9;
+            margin-bottom: 15px;
+            border-bottom: 3px dashed var(--light-blue);
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .words-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
+            gap: 15px;
+        }
+
+        .word-card {
+            background: var(--white);
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 15px;
+            position: relative;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .word-card:hover { transform: translateY(-5px); border-color: var(--light-blue); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+
+        .btn-delete {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px;
+            min-height: auto;
+            width: auto;
+            box-shadow: none;
+            transition: transform 0.2s;
+            opacity: 0.6;
+        }
+        .btn-delete:hover {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+
+        .word-en { font-size: clamp(1.1rem, 2.5vw, 1.3rem); font-weight: bold; color: #0ea5e9; padding-right: 25px; }
+        .word-ro { color: var(--text-light); margin-bottom: 8px; font-weight: 600; font-size: 0.95rem; }
+        .word-ctx { font-size: 0.85rem; font-style: italic; color: var(--text-dark); margin-bottom: 12px; line-height: 1.4; }
+
+        .btn-listen {
+            background-color: var(--light-blue);
+            color: #0c4a6e;
+            padding: 8px 4px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            box-shadow: 0 3px 0 #38bdf8;
+            width: auto;
+            flex: 1; 
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        /* Quiz Overlay */
+        #quiz-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .quiz-container {
+            background: var(--white);
+            padding: clamp(20px, 5vw, 40px);
+            border-radius: 24px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 4px solid var(--solar-yellow);
+        }
+
+        .quiz-question { font-size: clamp(1.2rem, 4vw, 1.5rem); margin-bottom: 20px; font-weight: bold;}
+        .quiz-option {
+            background: var(--bg-color);
+            border: 2px solid #cbd5e1;
+            padding: clamp(10px, 3vw, 15px);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            transition: all 0.2s;
+        }
+        .quiz-option:hover { background: var(--light-blue); border-color: #38bdf8; }
+        .quiz-correct { background: var(--mint) !important; border-color: #34d399 !important; }
+        .quiz-wrong { background: var(--soft-pink) !important; border-color: #fb7185 !important; }
+
+        .celebrate-anim { animation: pop 0.5s ease; }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Landscape Optimization for 720p screens */
+        @media (max-height: 750px) {
+            header { margin-bottom: 15px; }
+            .gamification-panel, .wotd-card { margin-bottom: 15px; padding: 10px 15px; }
+            .wotd-word { margin: 5px 0; }
+            .main-grid { gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🧪 Maximilian's Word Lab 🔬</h1>
+        <p>Your personal English journey!</p>
+    </header>
+
+    <div class="gamification-panel celebrate-anim" id="gamification-panel">
+        <h3>Level Progress</h3>
+        <p>Words added: <strong id="word-count">0</strong></p>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <p id="level-text">Add 10 words to unlock your first badge!</p>
+        <div class="badges" id="badges-container"></div>
+        
+        <!-- Legendă extensibilă -->
+        <details class="badge-legend">
+            <summary>🏅 See All Badges</summary>
+            <div class="legend-grid">
+                <div class="legend-item"><div class="icon">🏆</div><div class="name">Explorer</div><div class="req">10 words</div></div>
+                <div class="legend-item"><div class="icon">🎖️</div><div class="name">Master</div><div class="req">20 words</div></div>
+                <div class="legend-item"><div class="icon">👑</div><div class="name">Legend</div><div class="req">30 words</div></div>
+                <div class="legend-item"><div class="icon">🌟</div><div class="name">Champion</div><div class="req">40 words</div></div>
+                <div class="legend-item"><div class="icon">💎</div><div class="name">Diamond</div><div class="req">50 words</div></div>
+                <div class="legend-item"><div class="icon">🔥</div><div class="name">Fire</div><div class="req">60 words</div></div>
+                <div class="legend-item"><div class="icon">⚡</div><div class="name">Thunder</div><div class="req">70 words</div></div>
+                <div class="legend-item"><div class="icon">🎨</div><div class="name">Artist</div><div class="req">80 words</div></div>
+                <div class="legend-item"><div class="icon">🚀</div><div class="name">Rocket</div><div class="req">90 words</div></div>
+                <div class="legend-item"><div class="icon">🏅</div><div class="name">Hero</div><div class="req">100 words</div></div>
+            </div>
+        </details>
+    </div>
+
+    <div class="wotd-card" id="wotd-container">
+        <h2>🌟 Word of the Day</h2>
+        <div class="wotd-word" id="wotd-en">Loading...</div>
+        <div id="wotd-ro"></div>
+        <div class="wotd-context" id="wotd-ctx"></div>
+        <div style="margin-top: 15px; display: flex; justify-content: center; gap: 10px;">
+            <button class="btn-listen" id="btn-listen-wotd-word" style="max-width: 150px;">🔊 Word</button>
+            <button class="btn-listen" id="btn-listen-wotd-ctx" style="max-width: 150px;">🔊 Context</button>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <!-- Form Side -->
+        <div class="add-form">
+            <h3 style="margin-bottom: 15px;">➕ Add a New Word</h3>
+            <form id="add-word-form">
+                <input type="text" id="input-en" placeholder="English Word (e.g., Apple)" required>
+                <input type="text" id="input-ro" placeholder="Translation (e.g., Măr)" required>
+                <textarea id="input-ctx" rows="3" placeholder="Write a context sentence..." required></textarea>
+                <button type="submit" class="btn-add">💾 Save Word</button>
+            </form>
+
+            <button class="btn-quiz" onclick="startQuiz()">🎮 Start Sunday Challenge</button>
+            <button class="btn-pdf" onclick="generatePDF()">📄 Download My Progress</button>
+        </div>
+
+        <!-- List Side -->
+        <div>
+            <h3 style="margin-bottom: 15px;">📚 My Glossary</h3>
+            <div class="words-list" id="words-list">
+                <!-- Words will appear here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quiz Overlay -->
+<div id="quiz-overlay">
+    <div class="quiz-container">
+        <h2 id="quiz-title">Sunday Challenge! 🏆</h2>
+        <div id="quiz-content">
+            <p id="quiz-progress" style="color: var(--text-light); margin-bottom: 10px;">Question 1/5</p>
+            <div class="quiz-question" id="quiz-question">Cum se spune "Aventură"?</div>
+            <div id="quiz-options">
+                <!-- Options will be injected here -->
+            </div>
+        </div>
+        <div id="quiz-result" style="display: none;">
+            <h2 style="font-size: 2rem; margin-bottom: 10px;" id="quiz-score-text"></h2>
+            <p id="quiz-feedback" style="margin-bottom: 20px; font-size: 1.2rem;"></p>
+            <button class="btn-add" onclick="closeQuiz()">Close Quiz</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- CONFIGURARE FIREBASE PENTRU GITHUB ---
+    // Când pui aplicația pe GitHub, înlocuiește valorile de mai jos 
+    // cu cele din proiectul tău Firebase creat gratuit:
+    const githubFirebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // Detectăm dacă rulăm în mediul de test sau pe GitHub-ul tău
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : githubFirebaseConfig;
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'maximilians-word-lab';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let myWords = []; // Array-ul local care va fi sincronizat cu cloud-ul
+
+    // --- AUTENTIFICARE ANONYMOUS ---
+    const initAuth = async () => {
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (error) {
+            console.error("Eroare la autentificare:", error);
+        }
+    };
+
+    initAuth();
+
+    onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+        if (user) {
+            setupFirestoreListener(); // Pornim sincronizarea când suntem conectați
+        }
+    });
+
+    // --- SINCRONIZARE BAZĂ DE DATE (REAL-TIME) ---
+    function setupFirestoreListener() {
+        if (!currentUser) return;
+        
+        // Folosim o colecție "publică" pe acest appId pentru ca device-urile voastre să vadă aceleași date
+        const wordsRef = collection(db, 'artifacts', appId, 'public', 'data', 'words');
+        
+        onSnapshot(wordsRef, (snapshot) => {
+            myWords = [];
+            snapshot.forEach(documentSnapshot => {
+                // Adăugăm și ID-ul documentului pentru a-l putea șterge mai târziu
+                myWords.push({ id: documentSnapshot.id, ...documentSnapshot.data() });
+            });
+            
+            renderGlossary();
+            updateGamification();
+        }, (error) => {
+            console.error("Eroare la citirea datelor:", error);
+        });
+    }
+
+    // --- DATABASE (Word of the Day & Quiz) ---
+    const database = [
+        {word: "Adventure", translation: "Aventură", context: "Going to the mountains was a great adventure."}, 
+        {word: "Brave", translation: "Curajos", context: "The little knight was very brave."}, 
+        {word: "Challenge", translation: "Provocare", context: "Learning a new language is a big challenge."}, 
+        {word: "Delicious", translation: "Delicios", context: "My mom made a delicious chocolate cake."}, 
+        {word: "Enthusiastic", translation: "Entuziasmat", context: "Maximilian is enthusiastic about his new app."}, 
+        {word: "Frequent", translation: "Frecvent", context: "Rain is very frequent in autumn."}, 
+        {word: "Generous", translation: "Generos", context: "He is generous and shares his toys with friends."}, 
+        {word: "Healthy", translation: "Sănătos", context: "Eating apples is a healthy habit."}, 
+        {word: "Imagine", translation: "A-și imagina", context: "Can you imagine a world with flying cars?"}, 
+        {word: "Journey", translation: "Călătorie", context: "The journey to London took three hours."}, 
+        {word: "Knowledge", translation: "Cunoștințe", context: "Reading books gives you a lot of knowledge."}, 
+        {word: "Lucky", translation: "Norocos", context: "I felt lucky because I found a four-leaf clover."}, 
+        {word: "Modern", translation: "Modern", context: "Our school has a very modern computer lab."}, 
+        {word: "Neighbor", translation: "Vecin", context: "Our neighbor has a very friendly dog."}, 
+        {word: "Opportunity", translation: "Oportunitate", context: "This is a great opportunity to practice English."}, 
+        {word: "Patient", translation: "Răbdător", context: "You need to be patient when you learn something new."}, 
+        {word: "Quietly", translation: "Cu liniște", context: "Please walk quietly because the baby is sleeping."}, 
+        {word: "Reason", translation: "Motiv", context: "What is the reason for your smile today?"}, 
+        {word: "Scientist", translation: "Om de știință", context: "A scientist studies how the world works."}, 
+        {word: "Treasure", translation: "Comoară", context: "The pirates found the gold treasure on the island."}, 
+        {word: "Useful", translation: "Util", context: "A dictionary is very useful for English learners."}, 
+        {word: "Vacation", translation: "Vacanță", context: "I am looking forward to our summer vacation."}, 
+        {word: "Weather", translation: "Vreme", context: "The weather today is perfect for a walk."}, 
+        {word: "Explore", translation: "A explora", context: "We love to explore the forest behind the house."}, 
+        {word: "Famous", translation: "Faimos", context: "Who is the most famous football player in the world?"}, 
+        {word: "Goal", translation: "Scop", context: "My goal is to read a whole book in English."}, 
+        {word: "History", translation: "Istorie", context: "We learned about ancient Egypt in history class."}, 
+        {word: "Improve", translation: "A îmbunătăți", context: "I want to improve my pronunciation."}, 
+        {word: "Mistake", translation: "Greșeală", context: "It is okay to make a mistake; that is how we learn."}, 
+        {word: "Success", translation: "Succes", context: "Hard work is the key to success."}
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setupWordOfTheDay();
+    });
+
+    // --- WORD OF THE DAY ---
+    function setupWordOfTheDay() {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 0);
+        const diff = now - start;
+        const oneDay = 1000 * 60 * 60 * 24;
+        const dayOfYear = Math.floor(diff / oneDay);
+        
+        const wotd = database[dayOfYear % database.length];
+        
+        document.getElementById('wotd-en').innerText = wotd.word;
+        document.getElementById('wotd-ro').innerText = wotd.translation;
+        document.getElementById('wotd-ctx').innerText = `"${wotd.context}"`;
+        
+        document.getElementById('btn-listen-wotd-word').onclick = () => window.speak(wotd.word);
+        document.getElementById('btn-listen-wotd-ctx').onclick = () => window.speak(wotd.context);
+    }
+
+    // --- SPEECH SYNTHESIS (Expusă global pentru butoane) ---
+    window.speak = function(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-GB'; 
+            utterance.rate = 0.9; 
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert("Sorry, your browser doesn't support audio!");
+        }
+    };
+
+    // --- ȘTERGERE CUVÂNT (Cloud) ---
+    window.deleteWord = async function(docId) {
+        if(confirm("Ești sigur că vrei să ștergi acest cuvânt?")) {
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'words', docId));
+                // Nu e nevoie să apelăm renderGlossary(), deoarece onSnapshot va detecta automat schimbarea!
+            } catch (error) {
+                console.error("Eroare la ștergerea cuvântului:", error);
+                alert("Nu am putut șterge cuvântul. Încearcă din nou.");
+            }
+        }
+    };
+
+    // --- ADD WORD (Salvare in Cloud) ---
+    document.getElementById('add-word-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!currentUser) {
+            alert("Așteptăm conectarea la baza de date...");
+            return;
+        }
+        
+        const en = document.getElementById('input-en').value.trim();
+        const ro = document.getElementById('input-ro').value.trim();
+        const ctx = document.getElementById('input-ctx').value.trim();
+
+        if(en && ro && ctx) {
+            const btn = this.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ Se salvează...";
+            btn.disabled = true;
+
+            try {
+                const wordsRef = collection(db, 'artifacts', appId, 'public', 'data', 'words');
+                await addDoc(wordsRef, { word: en, translation: ro, context: ctx, timestamp: Date.now() });
+                
+                this.reset();
+                
+                // Animație de succes
+                const panel = document.getElementById('gamification-panel');
+                panel.classList.remove('celebrate-anim');
+                void panel.offsetWidth; 
+                panel.classList.add('celebrate-anim');
+            } catch (error) {
+                console.error("Eroare la adăugarea cuvântului: ", error);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+    });
+
+    // --- RENDER GLOSSARY ---
+    function renderGlossary() {
+        const list = document.getElementById('words-list');
+        list.innerHTML = '';
+        
+        if (myWords.length === 0) {
+            list.innerHTML = '<p style="color: var(--text-light); grid-column: 1/-1;">No words yet! Add your first word to start the adventure.</p>';
+            return;
+        }
+
+        // 1. Sortăm alfabetic
+        const sortedWords = [...myWords].sort((a, b) => a.word.localeCompare(b.word, 'en', { sensitivity: 'base' }));
+
+        // 2. Grupăm după prima literă
+        const groupedWords = {};
+        sortedWords.forEach((item) => {
+            const firstLetter = item.word.charAt(0).toUpperCase();
+            if (!groupedWords[firstLetter]) groupedWords[firstLetter] = [];
+            groupedWords[firstLetter].push(item);
+        });
+
+        // 3. Randăm grupurile
+        Object.keys(groupedWords).sort().forEach(letter => {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'letter-group';
+            
+            const header = document.createElement('h4');
+            header.className = 'letter-header';
+            header.innerText = letter;
+            groupDiv.appendChild(header);
+
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'words-grid';
+
+            groupedWords[letter].forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'word-card';
+                
+                const safeWord = item.word.replace(/'/g, "\\'");
+                const safeCtx = item.context.replace(/'/g, "\\'");
+
+                card.innerHTML = `
+                    <button class="btn-delete" onclick="window.deleteWord('${item.id}')" title="Șterge cuvântul">🗑️</button>
+                    <div>
+                        <div class="word-en">${item.word}</div>
+                        <div class="word-ro">${item.translation}</div>
+                        <div class="word-ctx">"${item.context}"</div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: auto; padding-top: 10px;">
+                        <button class="btn-listen" onclick="window.speak('${safeWord}')">🔊 Word</button>
+                        <button class="btn-listen" onclick="window.speak('${safeCtx}')">🔊 Context</button>
+                    </div>
+                `;
+                gridDiv.appendChild(card);
+            });
+
+            groupDiv.appendChild(gridDiv);
+            list.appendChild(groupDiv);
+        });
+    }
+
+    // --- GAMIFICATION ---
+    function updateGamification() {
+        const count = myWords.length;
+        document.getElementById('word-count').innerText = count;
+        
+        const progressPercentage = (count % 10) * 10;
+        document.getElementById('progress-bar').style.width = progressPercentage === 0 && count > 0 ? '100%' : progressPercentage + '%';
+
+        const badgesEarned = Math.floor(count / 10);
+        let badgeHtml = '';
+        let title = 'Beginner';
+
+        // Noua scară de gamification
+        const badgeLevels = [
+            { limit: 1, icon: '🏆', name: 'Explorer' },
+            { limit: 2, icon: '🎖️', name: 'Master' },
+            { limit: 3, icon: '👑', name: 'Legend' },
+            { limit: 4, icon: '🌟', name: 'Champion' },
+            { limit: 5, icon: '💎', name: 'Diamond' },
+            { limit: 6, icon: '🔥', name: 'Fire' },
+            { limit: 7, icon: '⚡', name: 'Thunder' },
+            { limit: 8, icon: '🎨', name: 'Artist' },
+            { limit: 9, icon: '🚀', name: 'Rocket' },
+            { limit: 10, icon: '🏅', name: 'Hero' }
+        ];
+
+        badgeLevels.forEach(level => {
+            if (badgesEarned >= level.limit) {
+                badgeHtml += level.icon + ' ';
+                title = level.name;
+            }
+        });
+
+        document.getElementById('badges-container').innerHTML = badgeHtml;
+        
+        if (count > 0) {
+            if (badgesEarned >= 10) {
+                document.getElementById('level-text').innerText = `Level: ${title} | You are an ultimate English Hero!`;
+            } else {
+                let nextMilestone = (badgesEarned + 1) * 10;
+                document.getElementById('level-text').innerText = `Level: ${title} | ${nextMilestone - count} words until next badge!`;
+            }
+        } else {
+            document.getElementById('level-text').innerText = `Add 10 words to unlock your first badge!`;
+        }
+    }
+
+    // --- QUIZ LOGIC (Expus global) ---
+    let currentQuizQuestions = [];
+    let currentQIndex = 0;
+    let quizScore = 0;
+
+    window.startQuiz = function() {
+        let shuffledDb = [...database].sort(() => 0.5 - Math.random());
+        currentQuizQuestions = shuffledDb.slice(0, 5);
+        currentQIndex = 0;
+        quizScore = 0;
+
+        document.getElementById('quiz-overlay').style.display = 'flex';
+        document.getElementById('quiz-content').style.display = 'block';
+        document.getElementById('quiz-result').style.display = 'none';
+        
+        loadQuestion();
+    };
+
+    function loadQuestion() {
+        const qData = currentQuizQuestions[currentQIndex];
+        document.getElementById('quiz-progress').innerText = `Question ${currentQIndex + 1} of 5`;
+        document.getElementById('quiz-question').innerText = `Cum se spune "${qData.translation}"?`;
+
+        let options = [qData.word];
+        while(options.length < 3) {
+            let randomWrong = database[Math.floor(Math.random() * database.length)].word;
+            if(!options.includes(randomWrong)) options.push(randomWrong);
+        }
+        options.sort(() => 0.5 - Math.random());
+
+        const optionsContainer = document.getElementById('quiz-options');
+        optionsContainer.innerHTML = '';
+        
+        options.forEach(opt => {
+            const div = document.createElement('div');
+            div.className = 'quiz-option';
+            div.innerText = opt;
+            div.onclick = () => window.checkAnswer(div, opt, qData.word);
+            optionsContainer.appendChild(div);
+        });
+    }
+
+    window.checkAnswer = function(element, selected, correct) {
+        const options = document.querySelectorAll('.quiz-option');
+        options.forEach(opt => opt.onclick = null);
+
+        if(selected === correct) {
+            element.classList.add('quiz-correct');
+            quizScore++;
+            window.speak("Correct!");
+        } else {
+            element.classList.add('quiz-wrong');
+            options.forEach(opt => {
+                if(opt.innerText === correct) opt.classList.add('quiz-correct');
+            });
+            window.speak("Oops!");
+        }
+
+        setTimeout(() => {
+            currentQIndex++;
+            if(currentQIndex < 5) loadQuestion();
+            else showQuizResult();
+        }, 1500);
+    };
+
+    function showQuizResult() {
+        document.getElementById('quiz-content').style.display = 'none';
+        const resDiv = document.getElementById('quiz-result');
+        resDiv.style.display = 'block';
+        
+        document.getElementById('quiz-score-text').innerText = `${quizScore} / 5`;
+        
+        let feedback = "";
+        if(quizScore === 5) feedback = "Perfect score! You are a superstar, Maximilian! 🌟";
+        else if(quizScore >= 3) feedback = "Great job! Keep practicing! 👍";
+        else feedback = "Good effort! Let's learn more words next week! 💪";
+        
+        document.getElementById('quiz-feedback').innerText = feedback;
+        if (quizScore === 5) window.speak("Perfect score! Great job Maximilian!");
+    }
+
+    window.closeQuiz = function() {
+        document.getElementById('quiz-overlay').style.display = 'none';
+    };
+
+    // --- PDF EXPORT (Expus global) ---
+    window.generatePDF = function() {
+        if (!myWords || myWords.length === 0) {
+            alert("Your glossary is empty. Add some words first!");
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(22);
+        doc.setTextColor(14, 165, 233);
+        doc.text("My English Journey - Maximilian", 14, 20);
+
+        doc.setFontSize(12);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Total words learned: ${myWords.length}`, 14, 30);
+
+        // Sortăm și pentru PDF tot alfabetic
+        const sortedForPdf = [...myWords].sort((a, b) => a.word.localeCompare(b.word, 'en', { sensitivity: 'base' }));
+
+        const tableBody = sortedForPdf.map((item, index) => [
+            index + 1,
+            item.word,
+            item.translation,
+            item.context
+        ]);
+
+        doc.autoTable({
+            startY: 40,
+            head: [['#', 'English', 'Romanian', 'Context Sentence']],
+            body: tableBody,
+            theme: 'grid',
+            headStyles: { fillColor: [52, 211, 153], textColor: 255 },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            styles: { font: 'helvetica', fontSize: 10, cellPadding: 5 }
+        });
+
+        doc.save('Maximilians_Word_Lab.pdf');
+    };
+</script>
+
+</body>
+</html>
