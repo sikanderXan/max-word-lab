@@ -441,14 +441,16 @@
     // --- CONFIGURARE FIREBASE PENTRU GITHUB ---
     // Când pui aplicația pe GitHub, înlocuiește valorile de mai jos 
     // cu cele din proiectul tău Firebase creat gratuit:
-    const githubFirebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-        messagingSenderId: "YOUR_SENDER_ID",
-        appId: "YOUR_APP_ID"
-    };
+     const firebaseConfig = {
+    apiKey: "AIzaSyBXj4qOUsuCy2q2j7aFAfZfML9b3W1wR-Q",
+    authDomain: "maxwordlab.firebaseapp.com",
+    projectId: "maxwordlab",
+    storageBucket: "maxwordlab.firebasestorage.app",
+    messagingSenderId: "781496020264",
+    appId: "1:781496020264:web:5b78f7c4558c98419f741d",
+    measurementId: "G-P4YS5BBRTV"
+  };
+
 
     // Detectăm dacă rulăm în mediul de test sau pe GitHub-ul tău
     const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : githubFirebaseConfig;
