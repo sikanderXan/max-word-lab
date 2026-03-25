@@ -435,19 +435,19 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Aici pui DOAR codul copiat de tine din Firebase:
-   const firebaseConfig = {
-  apiKey: "AIzaSyBXj4qOUsuCy2q2j7aFAfZfML9b3W1wR-Q",
-  authDomain: "maxwordlab.firebaseapp.com",
-  projectId: "maxwordlab",
-  storageBucket: "maxwordlab.firebasestorage.app",
-  messagingSenderId: "781496020264",
-  appId: "1:781496020264:web:5b78f7c4558c98419f741d",
-  measurementId: "G-P4YS5BBRTV"
-};
+    // Cheile tale reale de conectare
+    const firebaseConfig = {
+        apiKey: "AIzaSyBXj4qOUsuCy2q2j7aFAfZfML9b3W1wR-Q",
+        authDomain: "maxwordlab.firebaseapp.com",
+        projectId: "maxwordlab",
+        storageBucket: "maxwordlab.firebasestorage.app",
+        messagingSenderId: "781496020264",
+        appId: "1:781496020264:web:5b78f7c4558c98419f741d",
+        measurementId: "G-P4YS5BBRTV"
+    };
 
     const appId = 'maximilians-word-lab';
     const app = initializeApp(firebaseConfig);
@@ -455,16 +455,12 @@
     const db = getFirestore(app);
 
     let currentUser = null;
-    let myWords = []; // Array-ul local care va fi sincronizat cu cloud-ul
+    let myWords = []; 
 
     // --- AUTENTIFICARE ANONYMOUS ---
     const initAuth = async () => {
         try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
+            await signInAnonymously(auth);
         } catch (error) {
             console.error("Eroare la autentificare:", error);
         }
@@ -475,24 +471,19 @@
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
         if (user) {
-            setupFirestoreListener(); // Pornim sincronizarea când suntem conectați
+            setupFirestoreListener(); 
         }
     });
 
     // --- SINCRONIZARE BAZĂ DE DATE (REAL-TIME) ---
     function setupFirestoreListener() {
         if (!currentUser) return;
-        
-        // Folosim o colecție "publică" pe acest appId pentru ca device-urile voastre să vadă aceleași date
         const wordsRef = collection(db, 'artifacts', appId, 'public', 'data', 'words');
-        
         onSnapshot(wordsRef, (snapshot) => {
             myWords = [];
             snapshot.forEach(documentSnapshot => {
-                // Adăugăm și ID-ul documentului pentru a-l putea șterge mai târziu
                 myWords.push({ id: documentSnapshot.id, ...documentSnapshot.data() });
             });
-            
             renderGlossary();
             updateGamification();
         }, (error) => {
@@ -538,7 +529,6 @@
         setupWordOfTheDay();
     });
 
-    // --- WORD OF THE DAY ---
     function setupWordOfTheDay() {
         const now = new Date();
         const start = new Date(now.getFullYear(), 0, 0);
@@ -556,7 +546,6 @@
         document.getElementById('btn-listen-wotd-ctx').onclick = () => window.speak(wotd.context);
     }
 
-    // --- SPEECH SYNTHESIS (Expusă global pentru butoane) ---
     window.speak = function(text) {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
@@ -569,12 +558,10 @@
         }
     };
 
-    // --- ȘTERGERE CUVÂNT (Cloud) ---
     window.deleteWord = async function(docId) {
         if(confirm("Ești sigur că vrei să ștergi acest cuvânt?")) {
             try {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'words', docId));
-                // Nu e nevoie să apelăm renderGlossary(), deoarece onSnapshot va detecta automat schimbarea!
             } catch (error) {
                 console.error("Eroare la ștergerea cuvântului:", error);
                 alert("Nu am putut șterge cuvântul. Încearcă din nou.");
@@ -582,7 +569,6 @@
         }
     };
 
-    // --- ADD WORD (Salvare in Cloud) ---
     document.getElementById('add-word-form').addEventListener('submit', async function(e) {
         e.preventDefault();
         if (!currentUser) {
@@ -606,7 +592,6 @@
                 
                 this.reset();
                 
-                // Animație de succes
                 const panel = document.getElementById('gamification-panel');
                 panel.classList.remove('celebrate-anim');
                 void panel.offsetWidth; 
@@ -620,7 +605,6 @@
         }
     });
 
-    // --- RENDER GLOSSARY ---
     function renderGlossary() {
         const list = document.getElementById('words-list');
         list.innerHTML = '';
@@ -630,10 +614,8 @@
             return;
         }
 
-        // 1. Sortăm alfabetic
         const sortedWords = [...myWords].sort((a, b) => a.word.localeCompare(b.word, 'en', { sensitivity: 'base' }));
 
-        // 2. Grupăm după prima literă
         const groupedWords = {};
         sortedWords.forEach((item) => {
             const firstLetter = item.word.charAt(0).toUpperCase();
@@ -641,7 +623,6 @@
             groupedWords[firstLetter].push(item);
         });
 
-        // 3. Randăm grupurile
         Object.keys(groupedWords).sort().forEach(letter => {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'letter-group';
@@ -681,7 +662,6 @@
         });
     }
 
-    // --- GAMIFICATION ---
     function updateGamification() {
         const count = myWords.length;
         document.getElementById('word-count').innerText = count;
@@ -693,7 +673,6 @@
         let badgeHtml = '';
         let title = 'Beginner';
 
-        // Noua scară de gamification
         const badgeLevels = [
             { limit: 1, icon: '🏆', name: 'Explorer' },
             { limit: 2, icon: '🎖️', name: 'Master' },
@@ -728,7 +707,6 @@
         }
     }
 
-    // --- QUIZ LOGIC (Expus global) ---
     let currentQuizQuestions = [];
     let currentQIndex = 0;
     let quizScore = 0;
@@ -813,7 +791,6 @@
         document.getElementById('quiz-overlay').style.display = 'none';
     };
 
-    // --- PDF EXPORT (Expus global) ---
     window.generatePDF = function() {
         if (!myWords || myWords.length === 0) {
             alert("Your glossary is empty. Add some words first!");
@@ -831,7 +808,6 @@
         doc.setTextColor(100, 116, 139);
         doc.text(`Total words learned: ${myWords.length}`, 14, 30);
 
-        // Sortăm și pentru PDF tot alfabetic
         const sortedForPdf = [...myWords].sort((a, b) => a.word.localeCompare(b.word, 'en', { sensitivity: 'base' }));
 
         const tableBody = sortedForPdf.map((item, index) => [
@@ -854,6 +830,5 @@
         doc.save('Maximilians_Word_Lab.pdf');
     };
 </script>
-
 </body>
 </html>
